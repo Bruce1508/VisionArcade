@@ -63,6 +63,12 @@ Responsibilities:
 
 If inference is slower than capture, old frames are discarded.
 
+Implemented in Milestone 3: the camera worker publishes each frame to two independent single-slot
+`FrameSlot`s — one for display, one for inference (a cloned Mat) — rather than one shared slot.
+This is the same single-slot/latest-value policy from §4 applied per consumer, not a new
+backpressure decision: `FrameSlot.take()` hands exclusive ownership to one taker, and two threads
+must never share one native Mat (§9), so two consumers need two owned copies.
+
 ### JavaFX Application Thread
 Responsibilities:
 - JavaFX controls

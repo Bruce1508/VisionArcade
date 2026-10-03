@@ -5,17 +5,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project state
 
 VisionArcade is a brand-new Java/Gradle project. Milestone 0 (toolchain, JavaFX window, OpenCV native
-loading, camera permission/capture) is done. Milestone 1 (live webcam preview) is implemented: a
-background `CameraCaptureWorker` publishes frames into a single-slot `FrameSlot`, and the JavaFX
-`AnimationTimer` in `VisionArcadeApp` renders the latest one via `FrameImageConverter`. Milestone 2 (ONNX
-detection spike) is implemented: `vision.Yolo26nObjectDetector` loads a YOLO26n ONNX model (COCO classes)
-via ONNX Runtime and runs preprocessing/inference/postprocessing/NMS on a `FrameSnapshot`, proven against
-both a known test image and a live webcam frame. It is not yet wired into `VisionArcadeApp`'s render loop
-or UI — that, plus a dedicated inference worker thread and box/label rendering, is Milestone 3. The game
-engine and Object Hunt are still out of scope until later milestones (see `TASKS.md`).
+loading, camera permission/capture) is done. Milestone 1 (live webcam preview) and Milestone 2 (ONNX
+detection spike, `vision.Yolo26nObjectDetector`) are done. Milestone 3 (real-time visualization) is
+implemented: `CameraCaptureWorker` now fans each frame out to two single-slot `FrameSlot`s (display +
+detection, the detection one a cloned `Mat`, since `FrameSlot.take()` hands exclusive ownership to one
+consumer); `vision.InferenceWorker` runs the detector on its own thread against the detection slot;
+`VisionArcadeApp` reads the latest `DetectionSnapshot` via an `AtomicReference` each render tick and calls
+`CameraPreviewView.showDetections()`, which draws boxes/labels and a render-FPS/inference-latency line on
+a `Canvas` overlay sized to the frame's native pixel dimensions. The game engine and Object Hunt are still
+out of scope until later milestones (see `TASKS.md`).
 
-Current milestone: **Milestone 2 — ONNX detection spike** (see `VisionArcade_docs/TASKS.md` for the live
-checklist — don't duplicate it here, it changes often).
+Current milestone: **Milestone 3 — Real-time visualization** (see `VisionArcade_docs/TASKS.md` for the
+live checklist — don't duplicate it here, it changes often).
 
 ## Documentation map
 
