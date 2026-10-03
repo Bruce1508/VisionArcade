@@ -4,10 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project state
 
-VisionArcade is a brand-new Java/Gradle project. `src/main/java/org/example/Main.java` is still the
-unmodified IntelliJ "Hello and welcome!" template, and `build.gradle` only has the `java` plugin plus
-JUnit — no JavaFX, OpenCV, ONNX Runtime, or `application` plugin/`mainClass` configured yet. The real
-design lives entirely in `VisionArcade_docs/`; the codebase has not caught up to the docs.
+VisionArcade is a brand-new Java/Gradle project, now mid-Milestone-0. The toolchain, JavaFX window
+(`org.example.visionarcade.app.VisionArcadeApp`), and OpenCV native-loading are wired up; ONNX Runtime,
+the game engine, and Object Hunt are still out of scope until later milestones (see `TASKS.md`).
 
 Current milestone: **Milestone 0 — Project and technical validation** (see `VisionArcade_docs/TASKS.md`
 for the live checklist — don't duplicate it here, it changes often).
@@ -33,12 +32,13 @@ Always use the wrapper, never a globally installed Gradle:
 ```bash
 ./gradlew build
 ./gradlew test
+./gradlew run
 ```
 
-Single test class: `./gradlew test --tests "org.example.SomeTest"`
+Single test class: `./gradlew test --tests "org.example.visionarcade.camera.OpenCvNativeLoadingTest"`
 
-`./gradlew run` is **not yet wired up** — there's no `application` plugin or `mainClass` set in
-`build.gradle`. Don't assume it works until that's configured (Milestone 0 work).
+Camera-hardware tests are gated and skipped by default (they'd prompt for macOS camera permission and
+aren't safe in CI): `./gradlew test -Dvisionarcade.hardwareTests=true --tests CameraCaptureSpikeTest`
 
 ## Working rules (from `VisionArcade_docs/AGENTS.md`)
 
