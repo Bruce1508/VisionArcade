@@ -4,12 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project state
 
-VisionArcade is a brand-new Java/Gradle project, now mid-Milestone-0. The toolchain, JavaFX window
-(`org.example.visionarcade.app.VisionArcadeApp`), and OpenCV native-loading are wired up; ONNX Runtime,
-the game engine, and Object Hunt are still out of scope until later milestones (see `TASKS.md`).
+VisionArcade is a brand-new Java/Gradle project. Milestone 0 (toolchain, JavaFX window, OpenCV native
+loading, camera permission/capture) is done. Milestone 1 (live webcam preview) is implemented: a
+background `CameraCaptureWorker` publishes frames into a single-slot `FrameSlot`, and the JavaFX
+`AnimationTimer` in `VisionArcadeApp` renders the latest one via `FrameImageConverter`. ONNX Runtime, the
+game engine, and Object Hunt are still out of scope until later milestones (see `TASKS.md`).
 
-Current milestone: **Milestone 0 — Project and technical validation** (see `VisionArcade_docs/TASKS.md`
-for the live checklist — don't duplicate it here, it changes often).
+Current milestone: **Milestone 1 — Live webcam view** (see `VisionArcade_docs/TASKS.md` for the live
+checklist — don't duplicate it here, it changes often).
 
 ## Documentation map
 
@@ -60,9 +62,10 @@ aren't safe in CI): `./gradlew test -Dvisionarcade.hardwareTests=true --tests Ca
   clock, persistence). Prefer composition over inheritance. No generic `Utils` dumping ground.
 - Record a new ADR only for a meaningful, hard-to-reverse technical decision — not routine implementation.
 
-## Planned architecture (not yet implemented)
+## Architecture
 
-Target data flow once Milestones 0-3 land (`ARCHITECTURE.md` §2):
+Target data flow (`ARCHITECTURE.md` §2); the `CameraCapture -> FrameSlot` half is implemented, the rest
+(`ObjectDetector` onward) is Milestone 2+:
 
 ```
 Webcam -> CameraCapture -> FrameSlot (latest-frame only) -> ObjectDetector (ONNX Runtime)
@@ -71,27 +74,34 @@ Webcam -> CameraCapture -> FrameSlot (latest-frame only) -> ObjectDetector (ONNX
 
 Three execution contexts only for the MVP — do not add a separate game thread until profiling proves it
 necessary:
-- **Camera worker**: opens camera, captures/timestamps frames, publishes latest safe frame, releases on shutdown.
-- **Inference worker**: reads latest frame, preprocesses, runs ONNX inference, publishes latest immutable
-  detection snapshot. Drops stale frames if inference is slower than capture.
-- **JavaFX Application Thread**: UI, game update/timing (`AnimationTimer`), rendering, reads latest detection
-  snapshot.
+- **Camera worker** (`camera.CameraCaptureWorker`, implemented): opens camera, captures/timestamps
+  frames, publishes latest safe frame via `camera.FrameSlot`, releases on shutdown.
+- **Inference worker** (Milestone 2+, not implemented): reads latest frame, preprocesses, runs ONNX
+  inference, publishes latest immutable detection snapshot. Drops stale frames if inference is slower
+  than capture.
+- **JavaFX Application Thread** (`app.VisionArcadeApp`, implemented for the camera feed): UI, update/
+  timing via `AnimationTimer`, rendering (`ui.FrameImageConverter` + `ui.CameraPreviewView`). Will also
+  read the latest detection snapshot once Milestone 2 lands.
 
-Planned package shape (`ARCHITECTURE.md` §6) — don't add `service`/`manager`/`repository`/`domain`/
+Package shape (`ARCHITECTURE.md` §6) — don't add `service`/`manager`/`repository`/`domain`/
 `infrastructure` layers without a real need:
 
 ```
 ...visionarcade
-├── app     — application lifecycle/bootstrap
-├── camera  — camera capture + frame ownership
-├── vision  — preprocessing, detector, detections, postprocessing
-├── game    — game state + Object Hunt rules
-└── ui      — JavaFX rendering/controllers
+├── app     — application lifecycle/bootstrap (VisionArcadeApp)
+├── camera  — camera capture + frame ownership (CameraSource, FrameSnapshot, FrameSlot, CameraCaptureWorker)
+├── vision  — preprocessing, detector, detections, postprocessing (Milestone 2+, not yet created)
+├── game    — game state + Object Hunt rules (Milestone 4+, not yet created)
+└── ui      — JavaFX rendering/controllers (FrameImageConverter, CameraPreviewView)
 ```
 
-Native resource ownership rules (`ARCHITECTURE.md` §9): the component that creates a native resource owns
-its release unless ownership is explicitly transferred; no multi-threaded mutation of the same native image
-object; stale frames replaced in the latest-frame slot must become eligible for cleanup.
+Native resource ownership rules (`ARCHITECTURE.md` §9), as implemented: `FrameSnapshot` owns its `Mat`
+and releases it in `close()`; `FrameSlot.publish()` releases whatever snapshot it supersedes rather than
+queuing it; the consumer (`VisionArcadeApp`'s `AnimationTimer`) takes exclusive ownership via
+`FrameSlot.take()` and must close what it takes.
+
+Note: JavaFX's `PixelFormat` has no 3-byte BGR variant (only RGB/BGRA), so `FrameImageConverter` converts
+BGR→RGB via OpenCV's `cvtColor` before writing — don't "fix" this back to a nonexistent BGR format.
 
 ## Before declaring a task complete
 
