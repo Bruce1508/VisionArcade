@@ -10,13 +10,24 @@ import org.example.visionarcade.camera.FrameSlot;
 import org.example.visionarcade.camera.FrameSnapshot;
 import org.example.visionarcade.camera.OpenCvCameraSource;
 import org.example.visionarcade.ui.CameraPreviewView;
+import org.example.visionarcade.vision.DetectionSnapshot;
+import org.example.visionarcade.vision.InferenceWorker;
+import org.example.visionarcade.vision.ObjectDetector;
+import org.example.visionarcade.vision.Yolo26nObjectDetector;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 public class VisionArcadeApp extends Application {
 
     static final String TITLE = "VisionArcade";
 
-    private final FrameSlot frameSlot = new FrameSlot();
+    private final FrameSlot displaySlot = new FrameSlot();
+    private final FrameSlot detectionSlot = new FrameSlot();
+    private final AtomicReference<DetectionSnapshot> latestDetection = new AtomicReference<>();
+
     private CameraCaptureWorker cameraWorker;
+    private InferenceWorker inferenceWorker;
+    private ObjectDetector detector;
     private AnimationTimer renderLoop;
 
     @Override
@@ -25,19 +36,32 @@ public class VisionArcadeApp extends Application {
 
         cameraWorker = new CameraCaptureWorker(
                 new OpenCvCameraSource(0),
-                frameSlot,
+                displaySlot,
+                detectionSlot,
                 message -> Platform.runLater(() -> previewView.showError(message)));
         cameraWorker.start();
+
+        try {
+            detector = new Yolo26nObjectDetector();
+            inferenceWorker = new InferenceWorker(detector, detectionSlot, latestDetection::set);
+            inferenceWorker.start();
+        } catch (Exception e) {
+            // Milestone 3 scope is wiring detection into the live view; a missing/bad model
+            // degrades to a plain camera feed with no boxes rather than crashing the app
+            // (ARCHITECTURE.md §10: "model missing" is a user-visible failure, not a silent one).
+            Platform.runLater(() -> previewView.showError("Object detection unavailable: " + e.getMessage()));
+        }
 
         renderLoop = new AnimationTimer() {
             @Override
             public void handle(long now) {
-                FrameSnapshot snapshot = frameSlot.take();
+                FrameSnapshot snapshot = displaySlot.take();
                 if (snapshot == null) {
                     return;
                 }
                 try {
                     previewView.showFrame(snapshot.mat());
+                    previewView.showDetections(latestDetection.get());
                 } finally {
                     snapshot.close();
                 }
@@ -54,6 +78,12 @@ public class VisionArcadeApp extends Application {
     public void stop() {
         if (renderLoop != null) {
             renderLoop.stop();
+        }
+        if (inferenceWorker != null) {
+            inferenceWorker.stop();
+        }
+        if (detector != null) {
+            detector.close();
         }
         if (cameraWorker != null) {
             cameraWorker.stop();
