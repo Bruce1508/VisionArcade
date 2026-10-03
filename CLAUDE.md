@@ -12,10 +12,15 @@ detection, the detection one a cloned `Mat`, since `FrameSlot.take()` hands excl
 consumer); `vision.InferenceWorker` runs the detector on its own thread against the detection slot;
 `VisionArcadeApp` reads the latest `DetectionSnapshot` via an `AtomicReference` each render tick and calls
 `CameraPreviewView.showDetections()`, which draws boxes/labels and a render-FPS/inference-latency line on
-a `Canvas` overlay sized to the frame's native pixel dimensions. The game engine and Object Hunt are still
-out of scope until later milestones (see `TASKS.md`).
+a `Canvas` overlay sized to the frame's native pixel dimensions. Milestone 4 (Object Hunt MVP) is
+implemented: `game.GameEngine` is a pure state machine (`tick(nowNanos, DetectionSnapshot)`, no camera/
+JavaFX dependency) that picks a target from a 10-class household-object pool, requires continuous
+confidence ≥0.5 detection for ≥600ms to count as "found", runs a 20s round timer, and auto-restarts after
+a 1.5s result display. `VisionArcadeApp` ticks one `GameEngine` per render frame using the same `now` the
+render loop already has; `CameraPreviewView.showGame()` draws the target/score/timer HUD and a transient
+"FOUND IT!"/"TIME'S UP!" message on the existing overlay `Canvas`.
 
-Current milestone: **Milestone 3 — Real-time visualization** (see `VisionArcade_docs/TASKS.md` for the
+Current milestone: **Milestone 4 — Object Hunt MVP** (see `VisionArcade_docs/TASKS.md` for the
 live checklist — don't duplicate it here, it changes often).
 
 ## Documentation map
@@ -96,7 +101,7 @@ Package shape (`ARCHITECTURE.md` §6) — don't add `service`/`manager`/`reposit
 ├── app     — application lifecycle/bootstrap (VisionArcadeApp)
 ├── camera  — camera capture + frame ownership (CameraSource, FrameSnapshot, FrameSlot, CameraCaptureWorker)
 ├── vision  — preprocessing, detector, detections, postprocessing (Milestone 2+, not yet created)
-├── game    — game state + Object Hunt rules (Milestone 4+, not yet created)
+├── game    — game state + Object Hunt rules (GameEngine, GameState)
 └── ui      — JavaFX rendering/controllers (FrameImageConverter, CameraPreviewView)
 ```
 

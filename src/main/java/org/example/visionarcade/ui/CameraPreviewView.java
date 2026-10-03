@@ -8,7 +8,10 @@ import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.Text;
 import org.bytedeco.opencv.opencv_core.Mat;
+import org.example.visionarcade.game.GameState;
 import org.example.visionarcade.vision.BoundingBox;
 import org.example.visionarcade.vision.DetectionSnapshot;
 
@@ -84,8 +87,20 @@ public final class CameraPreviewView extends StackPane {
         }
 
         double inferenceMs = snapshot == null ? 0 : snapshot.inferenceNanos() / 1_000_000.0;
+        drawHudText(gc, "render: %d fps   inference: %.1f ms".formatted(renderFps, inferenceMs), 8, 16);
+    }
+
+    /** Draws text on a translucent dark backing box so it stays readable over both the light letterbox bars and a bright video frame. */
+    private void drawHudText(GraphicsContext gc, String text, double x, double y) {
+        Text measure = new Text(text);
+        measure.setFont(gc.getFont());
+        double width = measure.getLayoutBounds().getWidth();
+        double height = measure.getLayoutBounds().getHeight();
+
+        gc.setFill(Color.rgb(0, 0, 0, 0.55));
+        gc.fillRect(x - 4, y - height + 3, width + 8, height);
         gc.setFill(Color.YELLOW);
-        gc.fillText("render: %d fps   inference: %.1f ms".formatted(renderFps, inferenceMs), 8, 16);
+        gc.fillText(text, x, y);
     }
 
     private void trackRenderFps() {
@@ -95,6 +110,21 @@ public final class CameraPreviewView extends StackPane {
             renderFps = framesSinceWindow;
             framesSinceWindow = 0;
             fpsWindowStartNanos = now;
+        }
+    }
+
+    /** Draws the Object Hunt HUD (target, timer, score) and a large transient result message; drawn after {@link #showDetections}. */
+    public void showGame(GameState state) {
+        GraphicsContext gc = overlay.getGraphicsContext2D();
+        drawHudText(gc, "find: %s   score: %d   %.0fs".formatted(state.targetLabel(), state.score(), state.secondsRemaining()),
+                8, 34);
+
+        if (state.result() != GameState.Result.IN_PROGRESS) {
+            String message = state.result() == GameState.Result.FOUND ? "FOUND IT!" : "TIME'S UP!";
+            gc.setFont(Font.font(28));
+            gc.setFill(state.result() == GameState.Result.FOUND ? Color.LIME : Color.ORANGE);
+            gc.fillText(message, overlay.getWidth() / 2 - 70, overlay.getHeight() / 2);
+            gc.setFont(Font.getDefault());
         }
     }
 

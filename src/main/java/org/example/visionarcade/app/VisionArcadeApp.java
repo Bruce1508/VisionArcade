@@ -9,12 +9,14 @@ import org.example.visionarcade.camera.CameraCaptureWorker;
 import org.example.visionarcade.camera.FrameSlot;
 import org.example.visionarcade.camera.FrameSnapshot;
 import org.example.visionarcade.camera.OpenCvCameraSource;
+import org.example.visionarcade.game.GameEngine;
 import org.example.visionarcade.ui.CameraPreviewView;
 import org.example.visionarcade.vision.DetectionSnapshot;
 import org.example.visionarcade.vision.InferenceWorker;
 import org.example.visionarcade.vision.ObjectDetector;
 import org.example.visionarcade.vision.Yolo26nObjectDetector;
 
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class VisionArcadeApp extends Application {
@@ -28,6 +30,7 @@ public class VisionArcadeApp extends Application {
     private CameraCaptureWorker cameraWorker;
     private InferenceWorker inferenceWorker;
     private ObjectDetector detector;
+    private GameEngine gameEngine;
     private AnimationTimer renderLoop;
 
     @Override
@@ -52,6 +55,8 @@ public class VisionArcadeApp extends Application {
             Platform.runLater(() -> previewView.showError("Object detection unavailable: " + e.getMessage()));
         }
 
+        gameEngine = new GameEngine(new Random(), System.nanoTime());
+
         renderLoop = new AnimationTimer() {
             @Override
             public void handle(long now) {
@@ -60,8 +65,10 @@ public class VisionArcadeApp extends Application {
                     return;
                 }
                 try {
+                    DetectionSnapshot detection = latestDetection.get();
                     previewView.showFrame(snapshot.mat());
-                    previewView.showDetections(latestDetection.get());
+                    previewView.showDetections(detection);
+                    previewView.showGame(gameEngine.tick(now, detection));
                 } finally {
                     snapshot.close();
                 }

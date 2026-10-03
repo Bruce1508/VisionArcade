@@ -1,47 +1,60 @@
 # Current Tasks
 
-Current milestone: **Milestone 3 — Real-time visualization**
+Current milestone: **Milestone 4 — Object Hunt MVP**
 
-Milestone 0 (toolchain/JavaFX/OpenCV/camera validation), Milestone 1 (live webcam preview), and
-Milestone 2 (ONNX detection spike) are complete — history preserved in git log.
+Milestone 0 (toolchain/JavaFX/OpenCV/camera validation), Milestone 1 (live webcam preview),
+Milestone 2 (ONNX detection spike), and Milestone 3 (real-time visualization) are complete —
+history preserved in git log.
 
 This file should describe the work that is actually next, not the entire product backlog.
 
 ## TODO
 
-- [x] Inference worker. (`vision.InferenceWorker`: dedicated daemon thread, reads the latest frame from its own `FrameSlot`, runs `ObjectDetector.detect()`, reports the result via a callback — never blocks the JavaFX Application Thread.)
-- [x] Immutable detection snapshots. (Already in place from Milestone 2 — `DetectionSnapshot` is handed to `VisionArcadeApp` via the worker's callback and read by the render loop through an `AtomicReference`.)
-- [x] Box/label rendering. (`CameraPreviewView` gained a transparent `Canvas` overlay sized to the frame's native pixel dimensions; `showDetections()` draws each box + `"label NN%"` text.)
-- [x] Coordinate transforms. (Boxes are already in original-frame pixel coordinates from Milestone 2's `LetterboxTransform`; the overlay canvas is sized to match the displayed image's native pixel dimensions 1:1, so no further scaling is needed — see the ARCHITECTURE.md note on why this is sufficient for now.)
-- [x] Basic FPS/latency debug overlay. (`CameraPreviewView` tracks its own render FPS and draws it alongside the latest `DetectionSnapshot.inferenceNanos()` as on-canvas text.)
+- [x] Game engine. (`game.GameEngine`: pure state machine advanced by `tick(nowNanos, DetectionSnapshot)` —
+  no camera/JavaFX dependency, unit tested with fake detections and an injected `Random`/clock per
+  `TESTING.md`.)
+- [x] Target pool. (10 household COCO classes, excluding "person": cup, bottle, cell phone, book,
+  scissors, clock, backpack, mouse, keyboard, remote. A round never repeats the previous round's target.)
+- [x] Confidence + stability gating. (Counts as "found" only at confidence ≥ 0.5, continuously for ≥ 600ms —
+  avoids single-frame noise triggering a win.)
+- [x] Round timer + auto-restart. (20s round timeout; on found/timeout shows the result for 1.5s, then
+  starts a new round automatically — driven by the existing `AnimationTimer`'s `now`, no new thread.)
+- [x] HUD. (`CameraPreviewView.showGame()` draws target/score/time-remaining on the existing overlay
+  `Canvas`, plus a large transient "FOUND IT!"/"TIME'S UP!" message.)
+- [x] Wiring. (`VisionArcadeApp` owns one `GameEngine`, ticks it once per render frame with the same
+  `now` the render loop already has, right after `showDetections()`.)
 
 ## Definition of done
 
-Milestone 3 is done only when:
+Milestone 4 is done only when:
 
-- boxes align correctly with objects — **needs manual confirmation: run `./gradlew run` and check the overlay against the live feed.** (Automated: confirmed no startup/runtime exceptions when launching the real app with the real camera and model.)
-- UI remains responsive — **needs the same manual run to confirm no stutter;** structurally guaranteed by `InferenceWorker` running on its own thread and the render loop only ever reading the latest available frame/detection, never blocking on either.
-- stale frames are dropped — **verified: `FrameSlot` (reused, `FrameSlotTest`) never queues, and `CameraCaptureWorkerTest` confirms both the display and detection slots receive frames from the same capture loop.**
-- latency does not grow over time — **structurally guaranteed: no queue anywhere in the new code (`InferenceWorker` takes-latest, `AtomicReference` holds-latest), so staleness is bounded by one frame + one inference cycle, not cumulative.**
+- a round can be won by holding the target object up to the camera — **needs manual confirmation:
+  run `./gradlew run`, show the named target object, and confirm "FOUND IT!" appears and score increments.**
+- a round can time out and a new target is assigned automatically — **needs the same manual run.**
+- the game never blocks or stutters the render loop — structurally guaranteed: `GameEngine.tick()` is a
+  pure, allocation-light function with no I/O, called directly on the JavaFX Application Thread per frame.
+- `./gradlew test` passes, including `GameEngineTest` (stability window, confidence gating, timeout,
+  auto-restart, no-repeat-target invariant — all via fake clocks/detections, no camera/model needed).
 
 ## Do not implement yet
 
-- game engine
-- Object Hunt
-- tracking
-- persistence
+- object tracking across frames (e.g. re-identifying the same physical object)
+- persistence (high scores, settings)
+- additional game modes beyond Object Hunt
 - Spring Boot
 - Docker
-- responsive image scaling (`ImageView` fitWidth/fitHeight) — still a known pre-existing gap from Milestone 1, out of scope unless it actually causes a visible problem
+- a settings/config screen for round duration, thresholds, or the target pool (fixed values are enough
+  until there's a concrete reason to make them adjustable)
 
 ## Notes for Codex
 
 Before editing:
 1. inspect the existing project;
-2. preserve the Milestone 0/1/2 toolchain/JavaFX/OpenCV/camera/vision wiring;
+2. preserve the Milestone 0–3 toolchain/JavaFX/OpenCV/camera/vision wiring;
 3. avoid replacing working configuration unnecessarily.
 
 After editing:
 1. run the build/tests;
-2. manually verify the live preview **and the detection overlay alignment** on the primary development machine;
-3. do not start Milestone 4 automatically.
+2. manually verify the live preview, detection overlay, **and the Object Hunt HUD/round transitions**
+   on the primary development machine;
+3. do not start a new milestone automatically.
