@@ -32,7 +32,10 @@ public final class Yolo26nObjectDetector implements ObjectDetector {
 
     public static final Path DEFAULT_MODEL_PATH = Path.of("models", "yolo26n.onnx");
     private static final int INPUT_SIZE = 640;
-    private static final double DEFAULT_CONFIDENCE_THRESHOLD = 0.25;
+    // Raised from the model's own common default (0.25): at 0.25 the live overlay showed frequent
+    // weak/noisy guesses (a raised hand misread as "person", glasses misread as "cell phone").
+    // 0.4 trims most of those while still catching confidently-detected objects.
+    private static final double DEFAULT_CONFIDENCE_THRESHOLD = 0.4;
     private static final double DEFAULT_IOU_THRESHOLD = 0.45;
 
     private static final String[] COCO_CLASSES = {
