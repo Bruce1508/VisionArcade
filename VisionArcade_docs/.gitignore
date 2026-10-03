@@ -1,0 +1,45 @@
+# Gradle
+.gradle/
+build/
+out/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# macOS
+.DS_Store
+
+# Java
+hs_err_pid*
+replay_pid*
+
+# Local environment
+.env
+.env.*
+!.env.example
+
+# Model binaries / generated ML artifacts
+models/*.onnx
+models/*.pt
+models/*.pth
+models/*.engine
+models/*.bin
+
+# Python workspace (future)
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Notebook checkpoints
+.ipynb_checkpoints/
+
+# Benchmark/profiling raw outputs
+profiles/
+benchmark-results/
