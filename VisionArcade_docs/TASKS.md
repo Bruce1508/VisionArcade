@@ -1,60 +1,54 @@
 # Current Tasks
 
-Current milestone: **Milestone 4 — Object Hunt MVP**
+Current milestone: **Milestone 5 — Tracking and smoothing**
 
 Milestone 0 (toolchain/JavaFX/OpenCV/camera validation), Milestone 1 (live webcam preview),
-Milestone 2 (ONNX detection spike), and Milestone 3 (real-time visualization) are complete —
-history preserved in git log.
+Milestone 2 (ONNX detection spike), Milestone 3 (real-time visualization), and Milestone 4
+(Object Hunt MVP) are complete — history preserved in git log.
 
 This file should describe the work that is actually next, not the entire product backlog.
 
 ## TODO
 
-- [x] Game engine. (`game.GameEngine`: pure state machine advanced by `tick(nowNanos, DetectionSnapshot)` —
-  no camera/JavaFX dependency, unit tested with fake detections and an injected `Random`/clock per
-  `TESTING.md`.)
-- [x] Target pool. (10 household COCO classes, excluding "person": cup, bottle, cell phone, book,
-  scissors, clock, backpack, mouse, keyboard, remote. A round never repeats the previous round's target.)
-- [x] Confidence + stability gating. (Counts as "found" only at confidence ≥ 0.5, continuously for ≥ 600ms —
-  avoids single-frame noise triggering a win.)
-- [x] Round timer + auto-restart. (20s round timeout; on found/timeout shows the result for 1.5s, then
-  starts a new round automatically — driven by the existing `AnimationTimer`'s `now`, no new thread.)
-- [x] HUD. (`CameraPreviewView.showGame()` draws target/score/time-remaining on the existing overlay
-  `Canvas`, plus a large transient "FOUND IT!"/"TIME'S UP!" message.)
-- [x] Wiring. (`VisionArcadeApp` owns one `GameEngine`, ticks it once per render frame with the same
-  `now` the render loop already has, right after `showDetections()`.)
+- [x] Box center smoothing. (`vision.DetectionTracker`: exponentially smooths each tracked box
+  toward its newest raw detection — `SMOOTHING_ALPHA = 0.35` — instead of snapping frame to frame.)
+- [x] Simple nearest-match tracking. (Each raw detection is matched to the nearest same-label track
+  from the previous update, within `MAX_MATCH_DISTANCE` pixels; unmatched detections start a new track.)
+- [x] Lost-object timeout. (A track not matched for `LOST_TIMEOUT_NANOS` (400ms) is dropped; a brief
+  miss just keeps the last known smoothed position instead of vanishing for one frame.)
+- [ ] Jitter metrics — deliberately deferred: no concrete consumer needs a number yet (Milestone 6 isn't
+  built), and `TESTING.md` says not to invent performance thresholds before a baseline exists. Revisit
+  once Vision Pong (M6) needs to know whether smoothing is actually enough.
 
 ## Definition of done
 
-Milestone 4 is done only when:
+Milestone 5 is done only when:
 
-- a round can be won by holding the target object up to the camera — **needs manual confirmation:
-  run `./gradlew run`, show the named target object, and confirm "FOUND IT!" appears and score increments.**
-- a round can time out and a new target is assigned automatically — **needs the same manual run.**
-- the game never blocks or stutters the render loop — structurally guaranteed: `GameEngine.tick()` is a
-  pure, allocation-light function with no I/O, called directly on the JavaFX Application Thread per frame.
-- `./gradlew test` passes, including `GameEngineTest` (stability window, confidence gating, timeout,
-  auto-restart, no-repeat-target invariant — all via fake clocks/detections, no camera/model needed).
+- `DetectionTracker` is unit tested without a camera or model (`DetectionTrackerTest`: pass-through on
+  first sighting, smoothing toward a new position, surviving a brief miss, dropping after a sustained
+  miss, and not conflating two far-apart same-label objects).
+- the live app still runs with no startup/runtime exceptions with the tracker wired between
+  `InferenceWorker` and the render loop — **needs manual confirmation: run `./gradlew run`.**
+- positions read as noticeably steadier than the raw per-frame boxes during a live run — **needs the
+  same manual run to judge subjectively; there is no numeric jitter threshold yet (see "Jitter metrics"
+  above).**
 
 ## Do not implement yet
 
-- object tracking across frames (e.g. re-identifying the same physical object)
-- persistence (high scores, settings)
-- additional game modes beyond Object Hunt
-- Spring Boot
-- Docker
-- a settings/config screen for round duration, thresholds, or the target pool (fixed values are enough
-  until there's a concrete reason to make them adjustable)
+- a heavy/general multi-object tracking framework (Kalman filters, Hungarian algorithm, ID re-assignment
+  across occlusion) — nearest-match + EMA is the roadmap's explicit "only if simple methods fail" floor
+- Milestone 6 (Vision Pong) itself — only build what M5's own definition of done needs
+- persistence, additional game modes, Spring Boot, Docker (unchanged from Milestone 4)
 
 ## Notes for Codex
 
 Before editing:
 1. inspect the existing project;
-2. preserve the Milestone 0–3 toolchain/JavaFX/OpenCV/camera/vision wiring;
+2. preserve the Milestone 0–4 toolchain/JavaFX/OpenCV/camera/vision/game wiring;
 3. avoid replacing working configuration unnecessarily.
 
 After editing:
 1. run the build/tests;
-2. manually verify the live preview, detection overlay, **and the Object Hunt HUD/round transitions**
-   on the primary development machine;
+2. manually verify the live preview, detection overlay, Object Hunt HUD, **and that tracked boxes look
+   steadier than before** on the primary development machine;
 3. do not start a new milestone automatically.

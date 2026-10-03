@@ -18,9 +18,13 @@ JavaFX dependency) that picks a target from a 10-class household-object pool, re
 confidence ≥0.5 detection for ≥600ms to count as "found", runs a 20s round timer, and auto-restarts after
 a 1.5s result display. `VisionArcadeApp` ticks one `GameEngine` per render frame using the same `now` the
 render loop already has; `CameraPreviewView.showGame()` draws the target/score/timer HUD and a transient
-"FOUND IT!"/"TIME'S UP!" message on the existing overlay `Canvas`.
+"FOUND IT!"/"TIME'S UP!" message on the existing overlay `Canvas`. Milestone 5 (tracking and smoothing)
+is implemented: `vision.DetectionTracker` sits between `InferenceWorker`'s raw per-cycle
+`DetectionSnapshot` and `VisionArcadeApp`'s `AtomicReference` — it matches each new detection to the
+nearest same-label track from the previous update, exponentially smooths the box toward it, and keeps a
+track alive through a brief miss (400ms grace period) instead of vanishing for one frame.
 
-Current milestone: **Milestone 4 — Object Hunt MVP** (see `VisionArcade_docs/TASKS.md` for the
+Current milestone: **Milestone 5 — Tracking and smoothing** (see `VisionArcade_docs/TASKS.md` for the
 live checklist — don't duplicate it here, it changes often).
 
 ## Documentation map

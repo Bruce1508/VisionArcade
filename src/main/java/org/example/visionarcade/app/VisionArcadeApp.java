@@ -12,6 +12,7 @@ import org.example.visionarcade.camera.OpenCvCameraSource;
 import org.example.visionarcade.game.GameEngine;
 import org.example.visionarcade.ui.CameraPreviewView;
 import org.example.visionarcade.vision.DetectionSnapshot;
+import org.example.visionarcade.vision.DetectionTracker;
 import org.example.visionarcade.vision.InferenceWorker;
 import org.example.visionarcade.vision.ObjectDetector;
 import org.example.visionarcade.vision.Yolo26nObjectDetector;
@@ -46,7 +47,9 @@ public class VisionArcadeApp extends Application {
 
         try {
             detector = new Yolo26nObjectDetector();
-            inferenceWorker = new InferenceWorker(detector, detectionSlot, latestDetection::set);
+            DetectionTracker tracker = new DetectionTracker();
+            inferenceWorker = new InferenceWorker(detector, detectionSlot,
+                    snapshot -> latestDetection.set(tracker.update(snapshot.captureTimeNanos(), snapshot)));
             inferenceWorker.start();
         } catch (Exception e) {
             // Milestone 3 scope is wiring detection into the live view; a missing/bad model
