@@ -11,8 +11,8 @@ Recommended for this new project:
 - **JavaFX:** 25.0.3 stable line
 - **JUnit:** 6.0.3 or newer stable 6.0.x when the project is initialized
 - **OpenCV:** 4.14.x
-- **ONNX Runtime Java:** latest stable version verified in Milestone 2
-- **Model candidate:** YOLO26n exported to ONNX
+- **ONNX Runtime Java:** 1.30.0 (pinned in Milestone 2; latest stable per Maven Central metadata, verified on macOS arm64)
+- **Model:** YOLO26n exported to ONNX (pinned in Milestone 2; see "Pinned model" below)
 - **Primary dev machine:** macOS Apple Silicon / aarch64
 
 Use stable releases, not EA/RC/nightly builds.
@@ -89,6 +89,22 @@ Model metadata that should be recorded:
 - class list/dataset
 - export command/options
 - SHA-256 checksum when practical
+
+### Pinned model (Milestone 2)
+
+- **Family/version:** YOLO26n (Ultralytics 8.4.172)
+- **Source:** auto-downloaded by the `ultralytics` PyPI package (`yolo26n.pt`, from Ultralytics' own
+  release assets), then exported locally — not committed anywhere upstream as an .onnx
+- **License:** AGPL-3.0 (Ultralytics) — fine for local MVP development; revisit before any distribution
+- **Input:** `images`, float32, `[1, 3, 640, 640]`, values in `0..1`
+- **Output:** `output0`, float32, `[1, 84, 8400]` — rows 0-3 are box `cx,cy,w,h` in 640-space pixels,
+  rows 4-83 are per-class sigmoid scores (80 COCO classes, no separate objectness score)
+- **Class list/dataset:** COCO 80 classes (standard Ultralytics COCO class order)
+- **Export command:** `yolo export model=yolo26n.pt format=onnx imgsz=640 opset=18` (run once in a
+  throwaway local venv with `ultralytics`, `onnx`, `onnxruntime` installed — this is dev-time tooling
+  per the Python policy above, not a project dependency)
+- **SHA-256:** `ce9e45055cc002ee8b431d4b1f055d96867f4199a05d024ee287755042c1118f`
+- **Local path:** `models/yolo26n.onnx` (gitignored; re-run the export command above to regenerate it)
 
 ## Python/ML workspace
 

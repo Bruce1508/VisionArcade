@@ -7,10 +7,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 VisionArcade is a brand-new Java/Gradle project. Milestone 0 (toolchain, JavaFX window, OpenCV native
 loading, camera permission/capture) is done. Milestone 1 (live webcam preview) is implemented: a
 background `CameraCaptureWorker` publishes frames into a single-slot `FrameSlot`, and the JavaFX
-`AnimationTimer` in `VisionArcadeApp` renders the latest one via `FrameImageConverter`. ONNX Runtime, the
-game engine, and Object Hunt are still out of scope until later milestones (see `TASKS.md`).
+`AnimationTimer` in `VisionArcadeApp` renders the latest one via `FrameImageConverter`. Milestone 2 (ONNX
+detection spike) is implemented: `vision.Yolo26nObjectDetector` loads a YOLO26n ONNX model (COCO classes)
+via ONNX Runtime and runs preprocessing/inference/postprocessing/NMS on a `FrameSnapshot`, proven against
+both a known test image and a live webcam frame. It is not yet wired into `VisionArcadeApp`'s render loop
+or UI — that, plus a dedicated inference worker thread and box/label rendering, is Milestone 3. The game
+engine and Object Hunt are still out of scope until later milestones (see `TASKS.md`).
 
-Current milestone: **Milestone 1 — Live webcam view** (see `VisionArcade_docs/TASKS.md` for the live
+Current milestone: **Milestone 2 — ONNX detection spike** (see `VisionArcade_docs/TASKS.md` for the live
 checklist — don't duplicate it here, it changes often).
 
 ## Documentation map

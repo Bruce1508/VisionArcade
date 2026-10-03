@@ -172,7 +172,7 @@ Native packaging/loading must be validated on the primary development machine du
 ### ONNX Runtime
 Use the direct Java binding. Avoid DJL initially; it would add an abstraction layer before the project needs multiple ML engines.
 
-The exact stable ONNX Runtime dependency version should be pinned when Milestone 2 begins and verified on macOS arm64.
+Pinned in Milestone 2: `com.microsoft.onnxruntime:onnxruntime:1.30.0`, verified on macOS arm64.
 
 ### Model
 First candidate: a small current Ultralytics detection model exported to ONNX, such as **YOLO26n**.
