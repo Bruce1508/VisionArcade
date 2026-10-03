@@ -11,8 +11,8 @@ This file should describe the work that is actually next, not the entire product
 - [x] Create the minimal JavaFX application: one window titled `VisionArcade`. (`org.example.visionarcade.app.VisionArcadeApp`, JavaFX 25.0.4, `javafx.controls` module only.)
 - [x] Configure JUnit 6 and add one tiny passing test. (`junit-bom:6.1.3`; `OpenCvNativeLoadingTest` doubles as the native-loading check.)
 - [x] Add a minimal OpenCV dependency/native-loading spike appropriate for macOS Apple Silicon. (`org.bytedeco:opencv-platform:4.14.0-1.5.14` — bundles native libs per-platform including macosx-arm64, no manual setup.)
-- [ ] Verify the app can request camera permission and capture at least one frame. **Needs manual run on this machine:** `./gradlew test -Dvisionarcade.hardwareTests=true --tests CameraCaptureSpikeTest` (macOS will prompt for camera permission on first run — grant it, then re-run).
-- [ ] Verify camera/native resources are released after the spike exits. (Covered by the same gated test — `camera.release()` in a `finally` block — confirm it passes once permission is granted.)
+- [x] Verify the app can request camera permission and capture at least one frame. (`./gradlew test -Dvisionarcade.hardwareTests=true --tests CameraCaptureSpikeTest` passes — camera opened, frame grabbed and non-empty. Note: camera permission on this machine was already granted to the terminal process; no new OS dialog appeared.)
+- [x] Verify camera/native resources are released after the spike exits. (`camera.release()` in the test's `finally` block; test passes cleanly.)
 - [x] Confirm `./gradlew build`, `./gradlew test`, and `./gradlew run` work. (All three ran successfully; `run` opens the JavaFX window and exits cleanly on kill.)
 - [x] Update this file with the actual dependency versions selected. (Java 25 LTS toolchain via foojay 1.0.0 → Temurin 25.0.4.1; Gradle 9.8.0; JavaFX 25.0.4 via `org.openjfx.javafxplugin` 0.1.0; OpenCV 4.14.0-1.5.14 via bytedeco `opencv-platform`; JUnit 6.1.3.)
 

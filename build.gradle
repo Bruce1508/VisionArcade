@@ -36,4 +36,5 @@ dependencies {
 
 test {
     useJUnitPlatform()
+    systemProperty 'visionarcade.hardwareTests', System.getProperty('visionarcade.hardwareTests', 'false')
 }
