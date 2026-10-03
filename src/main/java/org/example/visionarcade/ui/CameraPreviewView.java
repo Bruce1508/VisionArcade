@@ -15,12 +15,12 @@ import org.example.visionarcade.vision.DetectionSnapshot;
 public final class CameraPreviewView extends StackPane {
 
     private final ImageView imageView = new ImageView();
-    // Sized to match the displayed image's native pixel dimensions exactly (imageView has no
-    // fitWidth/fitHeight scaling — see ARCHITECTURE.md note), so a box drawn at a frame's pixel
-    // coordinates lines up with that same pixel in the image without a separate scale transform.
     private final Canvas overlay = new Canvas();
     private final Label errorLabel = new Label();
     private WritableImage buffer;
+
+    private int frameWidth;
+    private int frameHeight;
 
     private long fpsWindowStartNanos = System.nanoTime();
     private int framesSinceWindow;
@@ -28,6 +28,14 @@ public final class CameraPreviewView extends StackPane {
 
     public CameraPreviewView() {
         imageView.setPreserveRatio(true);
+        // Scale the image to fit however big the window actually is (user-resizable), rather
+        // than always rendering at the camera's native pixel size. The overlay binds to the same
+        // size and showDetections() replicates preserveRatio's own letterbox math so boxes track
+        // the scaled image instead of assuming 1:1 native pixels.
+        imageView.fitWidthProperty().bind(widthProperty());
+        imageView.fitHeightProperty().bind(heightProperty());
+        overlay.widthProperty().bind(widthProperty());
+        overlay.heightProperty().bind(heightProperty());
         overlay.setMouseTransparent(true);
         errorLabel.setTextFill(Color.WHITE);
         errorLabel.setWrapText(true);
@@ -38,12 +46,10 @@ public final class CameraPreviewView extends StackPane {
 
     public void showFrame(Mat bgrFrame) {
         errorLabel.setVisible(false);
+        frameWidth = bgrFrame.cols();
+        frameHeight = bgrFrame.rows();
         buffer = FrameImageConverter.toImage(bgrFrame, buffer);
         imageView.setImage(buffer);
-        if (overlay.getWidth() != bgrFrame.cols() || overlay.getHeight() != bgrFrame.rows()) {
-            overlay.setWidth(bgrFrame.cols());
-            overlay.setHeight(bgrFrame.rows());
-        }
         trackRenderFps();
     }
 
@@ -51,6 +57,15 @@ public final class CameraPreviewView extends StackPane {
     public void showDetections(DetectionSnapshot snapshot) {
         GraphicsContext gc = overlay.getGraphicsContext2D();
         gc.clearRect(0, 0, overlay.getWidth(), overlay.getHeight());
+        if (frameWidth == 0 || frameHeight == 0) {
+            return;
+        }
+
+        // Same fit-inside-a-box math as imageView's preserveRatio, so a detection box drawn here
+        // lands on the same screen pixel as the object it was detected on.
+        double scale = Math.min(overlay.getWidth() / frameWidth, overlay.getHeight() / frameHeight);
+        double offsetX = (overlay.getWidth() - frameWidth * scale) / 2;
+        double offsetY = (overlay.getHeight() - frameHeight * scale) / 2;
 
         if (snapshot != null) {
             gc.setStroke(Color.LIME);
@@ -58,11 +73,13 @@ public final class CameraPreviewView extends StackPane {
             gc.setFill(Color.LIME);
             for (var detection : snapshot.detections()) {
                 BoundingBox box = detection.box();
-                double width = box.x2() - box.x1();
-                double height = box.y2() - box.y1();
-                gc.strokeRect(box.x1(), box.y1(), width, height);
+                double x = offsetX + box.x1() * scale;
+                double y = offsetY + box.y1() * scale;
+                double width = (box.x2() - box.x1()) * scale;
+                double height = (box.y2() - box.y1()) * scale;
+                gc.strokeRect(x, y, width, height);
                 gc.fillText("%s %.0f%%".formatted(detection.label(), detection.confidence() * 100),
-                        box.x1() + 2, Math.max(12, box.y1() - 4));
+                        x + 2, Math.max(12, y - 4));
             }
         }
 
