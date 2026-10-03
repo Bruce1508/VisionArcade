@@ -1,5 +1,7 @@
 plugins {
     id 'java'
+    id 'application'
+    id 'org.openjfx.javafxplugin' version '0.1.0'
 }
 
 group = 'org.example'
@@ -9,6 +11,15 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(25)
     }
+}
+
+application {
+    mainClass = 'org.example.visionarcade.app.VisionArcadeApp'
+}
+
+javafx {
+    version = '25.0.4'
+    modules = ['javafx.controls']
 }
 
 repositories {
