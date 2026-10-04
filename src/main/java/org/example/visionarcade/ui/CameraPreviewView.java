@@ -12,6 +12,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import org.bytedeco.opencv.opencv_core.Mat;
 import org.example.visionarcade.game.GameState;
+import org.example.visionarcade.game.PongState;
 import org.example.visionarcade.vision.BoundingBox;
 import org.example.visionarcade.vision.DetectionSnapshot;
 
@@ -124,6 +125,34 @@ public final class CameraPreviewView extends StackPane {
             gc.setFont(Font.font(28));
             gc.setFill(state.result() == GameState.Result.FOUND ? Color.LIME : Color.ORANGE);
             gc.fillText(message, overlay.getWidth() / 2 - 70, overlay.getHeight() / 2);
+            gc.setFont(Font.getDefault());
+        }
+    }
+
+    /** Draws the Vision Pong field (ball, paddle, score) over the full overlay canvas, independent of the video's letterbox area. */
+    public void showPong(PongState state) {
+        GraphicsContext gc = overlay.getGraphicsContext2D();
+        double width = overlay.getWidth();
+        double height = overlay.getHeight();
+
+        gc.setStroke(Color.WHITE);
+        gc.setLineWidth(1);
+        gc.strokeRect(0, 0, width, height);
+
+        double paddleHeight = height * 0.2;
+        double paddleY = state.paddlePosition() * height - paddleHeight / 2;
+        gc.setFill(Color.CYAN);
+        gc.fillRect(width - 10, paddleY, 6, paddleHeight);
+
+        gc.setFill(Color.LIME);
+        gc.fillOval(state.ballX() * width - 6, state.ballY() * height - 6, 12, 12);
+
+        drawHudText(gc, "score: %d".formatted(state.score()), 8, 34);
+
+        if (state.result() == PongState.Result.MISSED) {
+            gc.setFont(Font.font(28));
+            gc.setFill(Color.ORANGE);
+            gc.fillText("MISSED!", width / 2 - 70, height / 2);
             gc.setFont(Font.getDefault());
         }
     }
