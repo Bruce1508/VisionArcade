@@ -22,9 +22,20 @@ render loop already has; `CameraPreviewView.showGame()` draws the target/score/t
 is implemented: `vision.DetectionTracker` sits between `InferenceWorker`'s raw per-cycle
 `DetectionSnapshot` and `VisionArcadeApp`'s `AtomicReference` — it matches each new detection to the
 nearest same-label track from the previous update, exponentially smooths the box toward it, and keeps a
-track alive through a brief miss (400ms grace period) instead of vanishing for one frame.
+track alive through a brief miss (400ms grace period) instead of vanishing for one frame. Milestone 6
+(second game: Vision Pong) is implemented: `game.PongEngine` is a pure state machine
+(`tick(nowNanos, DetectionSnapshot, frameHeight)`, no camera/JavaFX dependency) where a detected
+`"person"` controls a paddle — the controller box's vertical center, normalized by frame height and
+clamped to [0,1], is the paddle's target position, eased toward each tick and held steady when the
+controller isn't detected. A ball bounces around a normalized [0,1]x[0,1] field off the top/bottom/left
+walls and the paddle on the right wall; a miss shows a result message for 1.5s then restarts, mirroring
+`GameEngine`'s round/result/restart shape. `VisionArcadeApp` now ticks `PongEngine` instead of
+`GameEngine` per render frame; `CameraPreviewView.showPong()` draws the field/paddle/ball/score on the
+existing overlay `Canvas`. `GameEngine`/`GameState`/`CameraPreviewView.showGame()` (Object Hunt) are
+untouched and still tested — the app runs one game at a time, same as every milestone before it; there
+is no mode selector.
 
-Current milestone: **Milestone 5 — Tracking and smoothing** (see `VisionArcade_docs/TASKS.md` for the
+Current milestone: **Milestone 6 — Second game: Vision Pong** (see `VisionArcade_docs/TASKS.md` for the
 live checklist — don't duplicate it here, it changes often).
 
 ## Documentation map
