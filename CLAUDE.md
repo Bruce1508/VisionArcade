@@ -35,7 +35,7 @@ existing overlay `Canvas`. `GameEngine`/`GameState`/`CameraPreviewView.showGame(
 untouched and still tested — the app runs one game at a time, same as every milestone before it; there
 is no mode selector.
 
-Current milestone: **Milestone 6 — Second game: Vision Pong** (see `VisionArcade_docs/TASKS.md` for the
+Current milestone: **Milestone 7 — Quality and portfolio polish** (see `VisionArcade_docs/TASKS.md` for the
 live checklist — don't duplicate it here, it changes often).
 
 ## Documentation map

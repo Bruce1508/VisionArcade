@@ -106,6 +106,23 @@ Model metadata that should be recorded:
 - **SHA-256:** `ce9e45055cc002ee8b431d4b1f055d96867f4199a05d024ee287755042c1118f`
 - **Local path:** `models/yolo26n.onnx` (gitignored; re-run the export command above to regenerate it)
 
+## Packaging experiment (Milestone 7)
+
+`./gradlew installDist` (from the already-applied `application` plugin) produces a runnable
+distribution (`build/install/VisionArcade/bin/VisionArcade` + a `lib/` of jars) with no extra
+tooling or build.gradle changes.
+
+Finding: the distribution is **~473MB**. `opencv-platform`, `javacpp-platform`, and
+`openblas-platform` are "works on every OS/arch" uber-artifacts — each pulls in native jars for
+macOS, Linux, Windows, Android, and iOS, on every CPU architecture, even though a real install only
+ever runs on one. That's fine for local development (zero classifier wrangling across
+contributors' machines) but wrong for a release build.
+
+Not applied yet — would need validating on a real target machine before trusting it in a release:
+pass `-Djavacpp.platform=macosx-arm64` (or the matching platform string) to the build so
+`javacpp-platform`/`opencv-platform`/`openblas-platform` resolve only that platform's native jar.
+`jpackage` (native `.app`/`.dmg`) was not attempted — a separate, bigger step on top of this.
+
 ## Python/ML workspace
 
 Do not create the Python training stack until custom model work begins.

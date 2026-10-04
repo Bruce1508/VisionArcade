@@ -8,25 +8,28 @@ Instead of being a bounding-box demo, the application uses detected objects or b
 
 `real world -> webcam -> computer vision -> detections -> game logic -> JavaFX`
 
-## MVP
+## Two playable modes
 
-The first playable mode is **Object Hunt**:
+**Object Hunt** — the game asks for an object (a bottle, a cup, ...), the player shows it to the
+webcam, the detector confirms it with a confidence threshold and short stability window, and the
+game awards points and starts the next round.
 
-1. The game asks for an object, such as a bottle or cup.
-2. The player shows it to the webcam.
-3. The detector confirms the object with a confidence threshold and short stability window.
-4. The game awards points and starts the next round.
+**Vision Pong** — the player's own body (the `"person"` detection) controls a paddle by
+standing/crouching; a ball bounces around the field off the walls and the paddle, with score and
+automatic restart on a miss.
 
-## Planned progression
+Only one game runs at a time; there is no in-app mode selector yet.
 
-1. Project + native dependency validation
-2. JavaFX + webcam
-3. ONNX object detection
-4. Bounding-box visualization
-5. Object Hunt MVP
-6. Tracking/smoothing
-7. Second game, likely Vision Pong
-8. Testing, benchmarking, packaging, polish
+## Progress
+
+1. Project + native dependency validation — done
+2. JavaFX + webcam — done
+3. ONNX object detection — done
+4. Bounding-box visualization — done
+5. Object Hunt MVP — done
+6. Tracking/smoothing — done
+7. Second game (Vision Pong) — done
+8. Testing, benchmarking, packaging, polish — in progress (Milestone 7)
 
 ## Baseline stack
 
@@ -57,15 +60,13 @@ See `ARCHITECTURE.md` for the design and `TASKS.md` for the current work.
 
 ## Commands
 
-Commands will be finalized after the Gradle scaffold is applied.
-
-Expected shape:
-
 ```bash
 ./gradlew run
 ./gradlew test
 ./gradlew build
 ```
+
+Camera-hardware tests are gated and skipped by default: `./gradlew test -Dvisionarcade.hardwareTests=true`.
 
 ## Performance targets
 

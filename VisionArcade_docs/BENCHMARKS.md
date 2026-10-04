@@ -19,6 +19,22 @@ Record for every benchmark set:
 - execution provider
 - camera resolution / requested FPS
 
+### 2026-10-04 (Benchmark C only)
+
+- date: 2026-10-04
+- git commit: `883ade2` (M7 working tree, not yet committed at measurement time)
+- OS/version: macOS 26.6.2
+- CPU: Apple M4 Pro
+- RAM: 24 GB
+- JDK version: 25 LTS (Gradle toolchain-provisioned, per `DEVELOPMENT.md`)
+- OpenCV version: 4.14.0 (bytedeco `opencv-platform:4.14.0-1.5.14`)
+- ONNX Runtime version: 1.30.0
+- model name/version: YOLO26n, ONNX export (see `DEVELOPMENT.md` "Pinned model")
+- model input size: 640x640
+- execution provider: CPU (default `OrtSession.SessionOptions`, no GPU EP configured)
+- camera resolution / requested FPS: not explicitly requested by the app (`OpenCvCameraSource`
+  doesn't set `CAP_PROP_FRAME_WIDTH/HEIGHT/FPS`) — whatever the device's own default is
+
 ## Benchmark A — Camera only
 
 | Metric | Value |
@@ -50,13 +66,18 @@ Define end-to-end latency as clearly as possible, for example:
 
 | Metric | Value |
 |---|---:|
-| Camera FPS | TBD |
-| Inference FPS | TBD |
-| Mean inference latency | TBD |
-| p95 inference latency | TBD |
-| Approx. end-to-end latency | TBD |
-| CPU usage | TBD |
+| Render FPS (HUD "render" counter) | 28-30 fps |
+| Inference FPS | TBD — not directly counted; inference is faster than capture so it isn't the bottleneck |
+| Mean inference latency | ~15 ms (single stabilized HUD reading, not an averaged sample set) |
+| p95 inference latency | TBD — HUD shows an instantaneous reading, not a percentile |
+| Approx. end-to-end latency | TBD — not instrumented |
+| CPU usage | ~30% (Activity Monitor, `java` process) |
 | Peak memory | TBD |
+
+Measured 2026-10-04 by watching the live HUD line (`render: N fps   inference: X.X ms`) for
+30-60s with a person continuously in frame, plus Activity Monitor for CPU — see "Test
+environment" above for the exact build/hardware. One reading, not a multi-run statistical sample;
+re-measure with actual logging before trusting percentiles.
 
 ## Benchmark rules
 
