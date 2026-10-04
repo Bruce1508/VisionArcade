@@ -47,4 +47,41 @@ class InferenceWorkerTest {
 
         assertTrue(detectCalls.get() >= 2, "detector should have been invoked at least twice");
     }
+
+    @Test
+    void reportsErrorAndKeepsRunningWhenDetectorThrows() throws InterruptedException {
+        FrameSlot frameSlot = new FrameSlot();
+        CountDownLatch gotError = new CountDownLatch(1);
+        CountDownLatch gotDetectionAfterError = new CountDownLatch(1);
+        AtomicInteger detectCalls = new AtomicInteger();
+
+        ObjectDetector flakyDetector = new ObjectDetector() {
+            @Override
+            public DetectionSnapshot detect(FrameSnapshot frame) {
+                if (detectCalls.incrementAndGet() == 1) {
+                    throw new IllegalStateException("boom");
+                }
+                return new DetectionSnapshot(frame.frameId(), frame.captureTimeNanos(), List.of(), 123);
+            }
+
+            @Override
+            public void close() {
+            }
+        };
+
+        InferenceWorker worker = new InferenceWorker(flakyDetector, frameSlot,
+                snapshot -> gotDetectionAfterError.countDown(),
+                message -> gotError.countDown());
+        worker.start();
+
+        frameSlot.publish(new FrameSnapshot(1, System.nanoTime(), new Mat()));
+        assertTrue(gotError.await(2, TimeUnit.SECONDS), "expected an error callback for the failing frame");
+
+        Thread.sleep(50);
+        frameSlot.publish(new FrameSnapshot(2, System.nanoTime(), new Mat()));
+        assertTrue(gotDetectionAfterError.await(2, TimeUnit.SECONDS),
+                "worker thread must survive a detector exception and keep processing frames");
+
+        worker.stop();
+    }
 }

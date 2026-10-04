@@ -48,7 +48,8 @@ public class VisionArcadeApp extends Application {
             detector = new Yolo26nObjectDetector();
             DetectionTracker tracker = new DetectionTracker();
             inferenceWorker = new InferenceWorker(detector, detectionSlot,
-                    snapshot -> latestDetection.set(tracker.update(snapshot.captureTimeNanos(), snapshot)));
+                    snapshot -> latestDetection.set(tracker.update(snapshot.captureTimeNanos(), snapshot)),
+                    message -> Platform.runLater(() -> previewView.showError(message)));
             inferenceWorker.start();
         } catch (Exception e) {
             // Milestone 3 scope is wiring detection into the live view; a missing/bad model

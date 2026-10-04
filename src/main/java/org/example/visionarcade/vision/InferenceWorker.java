@@ -15,14 +15,21 @@ public final class InferenceWorker {
     private final ObjectDetector detector;
     private final FrameSlot frameSlot;
     private final Consumer<DetectionSnapshot> onDetection;
+    private final Consumer<String> onError;
 
     private volatile boolean running;
     private Thread thread;
 
     public InferenceWorker(ObjectDetector detector, FrameSlot frameSlot, Consumer<DetectionSnapshot> onDetection) {
+        this(detector, frameSlot, onDetection, message -> { });
+    }
+
+    public InferenceWorker(ObjectDetector detector, FrameSlot frameSlot, Consumer<DetectionSnapshot> onDetection,
+                            Consumer<String> onError) {
         this.detector = detector;
         this.frameSlot = frameSlot;
         this.onDetection = onDetection;
+        this.onError = onError;
     }
 
     public void start() {
@@ -43,6 +50,8 @@ public final class InferenceWorker {
             }
             try {
                 onDetection.accept(detector.detect(frame));
+            } catch (RuntimeException e) {
+                onError.accept("Detection failed on one frame: " + e.getMessage());
             } finally {
                 frame.close();
             }

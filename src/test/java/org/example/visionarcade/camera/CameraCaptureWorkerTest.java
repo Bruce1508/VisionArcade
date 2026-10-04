@@ -86,4 +86,36 @@ class CameraCaptureWorkerTest {
         assertTrue(errorReported.await(2, TimeUnit.SECONDS), "expected an error callback when open() fails");
         worker.stop();
     }
+
+    @Test
+    void reportsErrorAndReleasesCameraWhenFeedIsLost() throws InterruptedException {
+        CountDownLatch errorReported = new CountDownLatch(1);
+        AtomicBoolean released = new AtomicBoolean(false);
+
+        CameraSource droppingCamera = new CameraSource() {
+            @Override
+            public boolean open() {
+                return true;
+            }
+
+            @Override
+            public boolean read(Mat destination) {
+                return false;
+            }
+
+            @Override
+            public void release() {
+                released.set(true);
+            }
+        };
+
+        CameraCaptureWorker worker = new CameraCaptureWorker(
+                droppingCamera, new FrameSlot(), new FrameSlot(), message -> errorReported.countDown());
+        worker.start();
+
+        assertTrue(errorReported.await(2, TimeUnit.SECONDS), "expected an error callback when the feed is lost");
+        worker.stop();
+
+        assertTrue(released.get(), "camera must still be released after a lost feed");
+    }
 }

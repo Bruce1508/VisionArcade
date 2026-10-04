@@ -15,7 +15,12 @@ public final class OpenCvCameraSource implements CameraSource {
     @Override
     public boolean open() {
         capture = new VideoCapture(deviceIndex);
-        return capture.isOpened();
+        if (capture.isOpened()) {
+            return true;
+        }
+        capture.release();
+        capture = null;
+        return false;
     }
 
     @Override
