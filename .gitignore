@@ -7,6 +7,11 @@ build/
 
 ### VisionArcade ###
 models/*.onnx
+ml/.venv/
+ml/data/
+ml/runs/
+ml/*.pt
+yolo26n.pt
 
 ### IntelliJ IDEA ###
 .idea/modules.xml

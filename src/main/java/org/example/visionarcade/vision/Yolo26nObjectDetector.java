@@ -31,6 +31,14 @@ import static org.bytedeco.opencv.global.opencv_core.copyMakeBorder;
 public final class Yolo26nObjectDetector implements ObjectDetector {
 
     public static final Path DEFAULT_MODEL_PATH = Path.of("models", "yolo26n.onnx");
+
+    /** Fine-tuned on only the classes VisionArcade's games use (Milestone 8); see DEVELOPMENT.md. */
+    public static final Path FINE_TUNE_MODEL_PATH = Path.of("models", "yolo26n-finetune11.onnx");
+    public static final String[] FINE_TUNE_CLASSES = {
+            "cup", "bottle", "cell phone", "book", "scissors", "clock",
+            "backpack", "mouse", "keyboard", "remote", "person"
+    };
+
     private static final int INPUT_SIZE = 640;
     // Raised from the model's own common default (0.25): at 0.25 the live overlay showed frequent
     // weak/noisy guesses (a raised hand misread as "person", glasses misread as "cell phone").
@@ -63,6 +71,15 @@ public final class Yolo26nObjectDetector implements ObjectDetector {
 
     public Yolo26nObjectDetector(Path modelPath, double confidenceThreshold, double iouThreshold)
             throws OrtException, IOException {
+        this(modelPath, COCO_CLASSES, confidenceThreshold, iouThreshold);
+    }
+
+    /**
+     * @param classes this model's output class order (not necessarily the 80 COCO_CLASSES —
+     *                 e.g. a fine-tuned model with a reduced class set, see Milestone 8).
+     */
+    public Yolo26nObjectDetector(Path modelPath, String[] classes, double confidenceThreshold, double iouThreshold)
+            throws OrtException, IOException {
         if (!Files.isRegularFile(modelPath)) {
             throw new IOException("ONNX model not found at " + modelPath.toAbsolutePath()
                     + " — export it first (see VisionArcade_docs/DEVELOPMENT.md).");
@@ -70,7 +87,7 @@ public final class Yolo26nObjectDetector implements ObjectDetector {
         this.environment = OrtEnvironment.getEnvironment();
         this.session = environment.createSession(modelPath.toString(), new OrtSession.SessionOptions());
         this.inputName = session.getInputNames().iterator().next();
-        this.decoder = new YoloDetectionDecoder(COCO_CLASSES, confidenceThreshold, iouThreshold);
+        this.decoder = new YoloDetectionDecoder(classes, confidenceThreshold, iouThreshold);
     }
 
     @Override
