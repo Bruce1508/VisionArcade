@@ -106,6 +106,42 @@ Model metadata that should be recorded:
 - **SHA-256:** `ce9e45055cc002ee8b431d4b1f055d96867f4199a05d024ee287755042c1118f`
 - **Local path:** `models/yolo26n.onnx` (gitignored; re-run the export command above to regenerate it)
 
+### Fine-tuned model (Milestone 8)
+
+A fine-tune of the pinned model above on only the 11 classes VisionArcade's games actually use,
+to measure a real speed/accuracy difference against the stock 80-class model (see
+`BENCHMARKS.md`'s Benchmark B). Not swapped into the live app — `VisionArcadeApp` still uses the
+stock model; this is a comparison artifact pending the user's review of the numbers.
+
+- **Family/version:** YOLO26n (Ultralytics 8.4.173), fine-tuned from the same pinned `yolo26n.pt`
+  checkpoint — not trained from scratch
+- **Source:** this repo's `ml/training/finetune.py`, run 2026-10-05
+- **License:** AGPL-3.0 (Ultralytics) — derivative of the pinned model, same license terms
+- **Input:** `images`, float32, `[1, 3, 640, 640]`, values in `0..1` (unchanged from the pinned model)
+- **Output:** `output0`, float32, `[1, 15, 8400]` — rows 0-3 are box `cx,cy,w,h`, rows 4-14 are
+  per-class scores for the 11 classes below (vs. the pinned model's `[1, 84, 8400]` for 80 classes)
+- **Class list (output order):** `cup, bottle, cell phone, book, scissors, clock, backpack,
+  mouse, keyboard, remote, person` — the 10 classes in `game.GameEngine`'s Object Hunt pool, plus
+  `person` for `game.PongEngine`'s controller
+- **Dataset:** a COCO 2017 subset built by `ml/training/prepare_dataset.py` — not the full 19GB
+  COCO image set, just the images containing these 11 classes, capped per class. Actual sizes
+  (COCO's class frequencies are uneven, so not every class hit its cap):
+  - train: 3184 images, capped at 300/class, every class reached the cap
+  - val: 546 images, capped at 60/class; `scissors` only reached 28 (COCO's val2017 doesn't have
+    more scissors instances available)
+- **Training command/hyperparameters:** `ml/training/finetune.py` —
+  `model.train(data=data.yaml, epochs=40, patience=10, imgsz=640, device="mps")`; ran the full 40
+  epochs (patience never triggered — mAP50 kept setting new bests through epoch 38 of 40); 1.448
+  hours on an Apple M4 Pro via PyTorch MPS
+- **Measured accuracy:** mAP50 0.438, mAP50-95 0.287 overall on the held-out val split — full
+  per-class breakdown in `BENCHMARKS.md`
+- **Export command:** `yolo export model=best.pt format=onnx imgsz=640 opset=18` (via
+  `ml/export/export_onnx.py`)
+- **SHA-256:** `1d360d93175257f0959fd1c21de9b81ae6f98a1c6ce17a49ffe37f2cd3444955`
+- **Local path:** `models/yolo26n-finetune11.onnx` (gitignored; re-run the `ml/` pipeline in
+  `ml/README.md` to regenerate it — note the dataset download/training is nondeterministic in
+  wall-clock time and image sampling is seeded but depends on COCO's current hosted annotations)
+
 ## Packaging experiment (Milestone 7)
 
 `./gradlew installDist` (from the already-applied `application` plugin) produces a runnable

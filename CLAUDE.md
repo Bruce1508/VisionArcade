@@ -33,10 +33,17 @@ walls and the paddle on the right wall; a miss shows a result message for 1.5s t
 `GameEngine` per render frame; `CameraPreviewView.showPong()` draws the field/paddle/ball/score on the
 existing overlay `Canvas`. `GameEngine`/`GameState`/`CameraPreviewView.showGame()` (Object Hunt) are
 untouched and still tested — the app runs one game at a time, same as every milestone before it; there
-is no mode selector.
+is no mode selector. Milestone 7 (quality/portfolio polish) is done: fixed a silent-failure bug in
+`InferenceWorker` and a native-handle leak in `OpenCvCameraSource`, added CI, ran a packaging
+experiment, and recorded live benchmarks. Milestone 8 (custom fine-tune) added a `ml/` Python/
+PyTorch workspace that fine-tunes YOLO26n on only the 11 classes the games use, exported as
+`models/yolo26n-finetune11.onnx`; `Yolo26nObjectDetector` now takes its class list as a constructor
+parameter (backward compatible) so both models load through the same `ObjectDetector` boundary.
+The live app still runs the stock 80-class model — benchmarking found no meaningful speed
+difference between the two, so swapping was not done pending the user's call.
 
-Current milestone: **Milestone 7 — Quality and portfolio polish** (see `VisionArcade_docs/TASKS.md` for the
-live checklist — don't duplicate it here, it changes often).
+Current milestone: **Milestone 8 — Custom fine-tune: app's actual class set** (see
+`VisionArcade_docs/TASKS.md` for the live checklist — don't duplicate it here, it changes often).
 
 ## Documentation map
 

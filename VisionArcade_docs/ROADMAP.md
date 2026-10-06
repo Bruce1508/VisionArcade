@@ -150,3 +150,34 @@ Only here consider:
 - custom training
 - pose detection
 - more games
+
+---
+
+## Milestone 8 — Custom fine-tune: app's actual class set
+
+**Goal:** fine-tune the detector on only the classes the app uses, and measure the real
+speed/accuracy difference against the stock 80-class model — a concrete "custom training" result
+(ROADMAP's M7 "only here consider" list), not a from-scratch model.
+
+Tasks:
+- fine-tune YOLO26n (starting from its COCO-pretrained weights, not from scratch) on the 11
+  classes the app actually detects: `cup, bottle, cell phone, book, scissors, clock, backpack,
+  mouse, keyboard, remote` (Object Hunt's pool) + `person` (Vision Pong's controller)
+- build a small COCO-subset dataset for those 11 classes (images + remapped YOLO-format labels),
+  not a full 80-class COCO download
+- export the fine-tuned checkpoint to ONNX, same pattern as the pinned model in `DEVELOPMENT.md`
+- extend `Yolo26nObjectDetector` to accept its class list as a parameter instead of the hardcoded
+  80-class `COCO_CLASSES` array, so both models can be loaded and compared
+- benchmark inference latency of the stock model vs. the fine-tuned model on the same fixed image
+  set (fills in `BENCHMARKS.md`'s still-TBD Benchmark B properly, instead of a manual HUD read)
+- record the fine-tuned model's held-out validation mAP (measured, not estimated)
+
+Definition of done:
+- fine-tuned ONNX model loads and runs through the existing `ObjectDetector` interface with no
+  Java-side architecture change beyond the class-list parameter
+- `BENCHMARKS.md` has a real before/after latency comparison plus the new model's measured mAP
+- `DEVELOPMENT.md` records the fine-tuned model's provenance the same way the pinned model is
+  documented (dataset size, class list, training command, checksum)
+
+Do not swap the live app over to the fine-tuned model without the user confirming it after seeing
+the before/after numbers.

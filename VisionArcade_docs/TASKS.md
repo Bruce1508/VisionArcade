@@ -1,47 +1,50 @@
 # Current Tasks
 
-Current milestone: **Milestone 7 — Quality and portfolio polish**
+Current milestone: **Milestone 8 — Custom fine-tune: app's actual class set**
 
-Milestones 0-6 (toolchain/JavaFX/OpenCV/camera validation, live webcam preview, ONNX detection
-spike, real-time visualization, Object Hunt MVP, tracking/smoothing, Vision Pong) are complete —
-history preserved in git log.
+Milestones 0-7 (toolchain/JavaFX/OpenCV/camera validation, live webcam preview, ONNX detection
+spike, real-time visualization, Object Hunt MVP, tracking/smoothing, Vision Pong, quality/
+portfolio polish) are complete — history preserved in git log.
 
 This file should describe the work that is actually next, not the entire product backlog.
 
 ## TODO
 
-- [x] Test failure paths. `InferenceWorker` previously let any detector exception kill its thread
-  silently, freezing detections forever with no visible error — added an `onError` callback
-  (matching `CameraCaptureWorker`'s existing one), wired to `previewView.showError`, covered by a
-  new `InferenceWorkerTest` case. Added a `CameraCaptureWorkerTest` case for the pre-existing
-  "lost camera feed" path, which was implemented but untested.
-- [x] Tighten resource cleanup. `OpenCvCameraSource.open()` left a half-initialized native
-  `VideoCapture` handle unreleased when `isOpened()` returned false; now releases and nulls it.
-- [x] Code cleanup pass. Audited camera/vision/game/ui/app for dead code, TODOs, and duplication —
-  found none worth changing; the codebase was already disciplined from prior milestones' review
-  passes.
-- [x] Packaging experiment. `./gradlew installDist` works with no build.gradle changes, but
-  produces a ~473MB distribution (all-OS/arch native libs from the `*-platform` uber-artifacts).
-  Documented in `DEVELOPMENT.md`; not trimmed per the user's call (document, don't build it).
-- [x] README/demo media. Updated `VisionArcade_docs/README.md`'s progress list and commands
-  section to match reality (M1-M6 done, M7 in progress). Demo media (screenshot/GIF) not added —
-  needs a human to capture the running app.
-- [x] Optional CI. Added `.github/workflows/build.yml` — `./gradlew build` on push/PR to `main`.
-  Hardware tests default off (`visionarcade.hardwareTests=false`); model-gated integration test
-  auto-skips since `models/*.onnx` isn't committed — CI should be green with no extra config.
-- [x] Benchmark repeatable scenarios. User ran `./gradlew run` and reported the live HUD/Activity
-  Monitor readings (28-30 fps render, ~15ms inference, ~30% CPU on an Apple M4 Pro); recorded in
-  `BENCHMARKS.md`'s Benchmark C with the full test-environment header. Benchmarks A/B (camera-only,
-  fixed-image-set) and percentile/memory figures remain TBD — would need actual instrumentation,
-  not just the live HUD.
+- [x] Build an 11-class COCO subset dataset. `ml/training/prepare_dataset.py` — 3184 train / 546
+  val images for `cup, bottle, cell phone, book, scissors, clock, backpack, mouse, keyboard,
+  remote, person`. Not full COCO (19GB); annotations-only download (~241MB) filtered/capped
+  per-class, images downloaded individually.
+- [x] Fine-tune YOLO26n on the subset, starting from its COCO-pretrained weights, not from
+  scratch. `ml/training/finetune.py`, 40 epochs (patience=10 never triggered — kept improving
+  through epoch 38), MPS device on Apple M4 Pro, 1.448 hours. mAP50 0.438 / mAP50-95 0.287 on the
+  held-out val split — see `DEVELOPMENT.md`'s "Fine-tuned model (Milestone 8)" and
+  `BENCHMARKS.md`'s per-class table.
+- [x] Export to ONNX. `models/yolo26n-finetune11.onnx`, output shape `[1, 15, 8400]` (confirmed
+  vs. the stock model's `[1, 84, 8400]`).
+- [x] Extend `Yolo26nObjectDetector` to accept a class list, not just the hardcoded 80-class
+  array — backward compatible, both existing call sites (`VisionArcadeApp`, the integration test)
+  unchanged.
+- [x] Benchmark stock vs. fine-tuned inference latency on the same fixed image, same machine.
+  `Yolo26nBenchmarkComparisonTest` (gated on both model files existing) — fills in `BENCHMARKS.md`'s
+  Benchmark B. **Finding: no meaningful speed difference** (mean 12.45ms stock vs. 12.91ms
+  fine-tuned) — the output head shrinking from 84 to 15 channels is a small fraction of total
+  compute; the backbone dominates runtime regardless of class count. The hypothesis that fewer
+  classes = faster inference did not hold up.
+- [x] Record the fine-tuned model's held-out validation mAP. Done above — no comparable "before"
+  accuracy number was produced (would need a second label set in COCO's 80-class index space to
+  fairly score the stock model; not attempted, noted honestly in `BENCHMARKS.md` instead of
+  fabricating a comparison).
 
 ## Do not implement yet
 
-- persistence, custom training, pose detection, more games — ROADMAP.md says these are only to be
-  *considered* once M7 is otherwise done, not built as part of it
+- swapping the live app (`VisionArcadeApp`) over to the fine-tuned model — ROADMAP.md Milestone 8
+  explicitly says not to, without the user confirming after seeing the numbers above (speed is a
+  wash; the user hasn't yet decided if the accuracy tradeoff/narrower class set is worth it)
+- a COCO-80-index-space re-evaluation to get a fair stock-model accuracy baseline — not attempted
+  this round; would be the natural next step if the user wants a real accuracy before/after
+- persistence, pose detection, more games — still only to be *considered* per ROADMAP.md, not
+  built
 - a mode selector between Object Hunt and Vision Pong — unchanged from Milestone 6
-- trimming the packaging distribution or attempting `jpackage` — experiment documented, not
-  pursued further per the user's call this session
 
 ## Notes for Codex
 
