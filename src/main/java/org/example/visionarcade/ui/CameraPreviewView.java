@@ -230,6 +230,12 @@ public final class CameraPreviewView extends StackPane {
         }
     }
 
+    /** Clears the overlay canvas; used when returning to the mode-select menu so no stale game HUD lingers. */
+    public void clearOverlay() {
+        GraphicsContext gc = overlay.getGraphicsContext2D();
+        gc.clearRect(0, 0, overlay.getWidth(), overlay.getHeight());
+    }
+
     public void showError(String message) {
         errorLabel.setText(message);
         errorLabel.setVisible(true);
