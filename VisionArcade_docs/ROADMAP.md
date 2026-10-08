@@ -221,3 +221,42 @@ Do not:
 - train or fine-tune a pose model — use its COCO-pretrained weights as-is
 - handle more than one tracked person — take the most confident detection only
 - build a mode selector
+
+---
+
+## Milestone 10 — Mode selector
+
+**Goal:** let the player pick Object Hunt, Vision Pong, or Pose Match from an in-app menu instead
+of needing a code change. Reverses the "no mode selector" scope limit every milestone up to now
+deliberately deferred — now that all three games exist, this is the natural next step, not scope
+creep.
+
+Tasks:
+- `app.GameMode` enum (OBJECT_HUNT, VISION_PONG, POSE_MATCH) with a display name
+- `ui.ModeSelectView`: a simple overlay with a title and one button per `GameMode`, shown over the
+  live camera feed
+- `VisionArcadeApp` restructured around two lazily-started vision pipelines instead of one fixed
+  one: the object-detection pipeline (`ObjectDetector`/`InferenceWorker`/`DetectionTracker`, shared
+  by Object Hunt and Vision Pong — switching between those two never reloads the model) and the
+  pose pipeline (`PoseEstimator`/`PoseInferenceWorker`). Selecting a mode starts whichever pipeline
+  it needs and stops the other if it was running; the camera worker itself stays running
+  continuously across mode switches
+- picking a mode always creates a fresh engine instance (`GameEngine`/`PongEngine`/
+  `PoseMatchEngine`) — score/round state never carries over between menu visits
+- Escape returns to the menu from any game; the render loop keeps showing the live camera feed
+  behind the menu, just skips ticking/drawing a game overlay while no mode is selected
+- `CameraPreviewView` gains a small `clearOverlay()` so stale HUD drawings don't linger when
+  returning to the menu
+
+Definition of done:
+- app launches to the menu, not straight into a game
+- all three games are reachable and playable from the menu in the same app session, including
+  switching directly between them without restarting the app
+- switching between Object Hunt and Vision Pong does not visibly reload the detector (no pause for
+  model loading)
+- `GameEngine`/`PongEngine`/`PoseMatchEngine` and their existing tests are untouched
+
+Do not:
+- preload all pipelines up front — lazy-start only the one the chosen mode needs
+- add persistence/high-scores — out of scope for this milestone (ROADMAP's own "only here
+  consider" list, still just under consideration)

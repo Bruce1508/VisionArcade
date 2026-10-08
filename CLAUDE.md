@@ -54,6 +54,17 @@ and `showPoseMatch()` draws the target/match%/score/timer HUD. `GameEngine`/`Pon
 object-detector path are untouched and still tested — one game at a time, no mode selector, same
 convention as every milestone before it. User confirmed live behavior looks correct.
 
+Milestone 10 (mode selector) is done: `VisionArcadeApp` now launches to `ui.ModeSelectView`'s menu
+(one button per `app.GameMode`) instead of a fixed game. Object Hunt and Vision Pong share one
+lazily-started object-detection pipeline (`ObjectDetector`/`InferenceWorker`/`DetectionTracker`) —
+switching between those two never reloads the model; Pose Match uses the separate pose pipeline.
+Selecting a mode starts whichever pipeline it needs and stops the other; the camera worker itself
+runs continuously across switches. Picking a mode always creates a fresh engine instance, so score/
+round state never carries over between menu visits. Escape returns to the menu from any game;
+`CameraPreviewView.clearOverlay()` clears stale HUD drawings when it does.
+`GameEngine`/`PongEngine`/`PoseMatchEngine` and their existing tests are untouched. User confirmed
+live behavior looks correct.
+
 No milestone is currently in progress (see `VisionArcade_docs/TASKS.md` and `ROADMAP.md` for
 possible next directions — none chosen yet).
 
