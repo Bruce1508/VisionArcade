@@ -29,3 +29,14 @@ dataset size, hyperparameters, and measured accuracy from the run that produced 
 model, and `VisionArcade_docs/BENCHMARKS.md` for the before/after speed comparison.
 
 `ml/data/` and `ml/runs/` are large and gitignored — regenerate by re-running the pipeline above.
+
+
+## Pipeline (Milestone 9: pretrained pose model, no training)
+
+Pose Match uses the stock COCO-keypoint pose model as-is — no dataset prep or training needed:
+
+1. `python export/export_pose_onnx.py` — auto-downloads `yolo26n-pose.pt` from Ultralytics'
+   release assets (if not already cached) and exports it to `models/yolo26n-pose.onnx`.
+
+See `VisionArcade_docs/DEVELOPMENT.md`'s "Pretrained pose model (Milestone 9)" section for the
+exact input/output shapes and checksum.

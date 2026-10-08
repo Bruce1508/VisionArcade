@@ -26,6 +26,16 @@ public record LetterboxTransform(double scale, int padLeft, int padTop, int resi
 
     /** Maps a box decoded in letterboxed model-input pixel space back to original frame pixels. */
     public BoundingBox toOriginalCoordinates(double x1, double y1, double x2, double y2) {
-        return new BoundingBox((x1 - padLeft) / scale, (y1 - padTop) / scale, (x2 - padLeft) / scale, (y2 - padTop) / scale);
+        return new BoundingBox(toOriginalX(x1), toOriginalY(y1), toOriginalX(x2), toOriginalY(y2));
+    }
+
+    /** Maps a single x coordinate decoded in letterboxed model-input pixel space back to original frame pixels. */
+    public double toOriginalX(double x) {
+        return (x - padLeft) / scale;
+    }
+
+    /** Maps a single y coordinate decoded in letterboxed model-input pixel space back to original frame pixels. */
+    public double toOriginalY(double y) {
+        return (y - padTop) / scale;
     }
 }

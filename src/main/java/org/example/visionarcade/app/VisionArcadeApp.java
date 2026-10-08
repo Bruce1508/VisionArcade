@@ -9,14 +9,14 @@ import org.example.visionarcade.camera.CameraCaptureWorker;
 import org.example.visionarcade.camera.FrameSlot;
 import org.example.visionarcade.camera.FrameSnapshot;
 import org.example.visionarcade.camera.OpenCvCameraSource;
-import org.example.visionarcade.game.PongEngine;
+import org.example.visionarcade.game.PoseMatchEngine;
 import org.example.visionarcade.ui.CameraPreviewView;
-import org.example.visionarcade.vision.DetectionSnapshot;
-import org.example.visionarcade.vision.DetectionTracker;
-import org.example.visionarcade.vision.InferenceWorker;
-import org.example.visionarcade.vision.ObjectDetector;
-import org.example.visionarcade.vision.Yolo26nObjectDetector;
+import org.example.visionarcade.vision.PoseEstimator;
+import org.example.visionarcade.vision.PoseInferenceWorker;
+import org.example.visionarcade.vision.PoseSnapshot;
+import org.example.visionarcade.vision.Yolo26nPoseEstimator;
 
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class VisionArcadeApp extends Application {
@@ -25,12 +25,12 @@ public class VisionArcadeApp extends Application {
 
     private final FrameSlot displaySlot = new FrameSlot();
     private final FrameSlot detectionSlot = new FrameSlot();
-    private final AtomicReference<DetectionSnapshot> latestDetection = new AtomicReference<>();
+    private final AtomicReference<PoseSnapshot> latestPose = new AtomicReference<>();
 
     private CameraCaptureWorker cameraWorker;
-    private InferenceWorker inferenceWorker;
-    private ObjectDetector detector;
-    private PongEngine pongEngine;
+    private PoseInferenceWorker poseWorker;
+    private PoseEstimator poseEstimator;
+    private PoseMatchEngine poseMatchEngine;
     private AnimationTimer renderLoop;
 
     @Override
@@ -45,20 +45,18 @@ public class VisionArcadeApp extends Application {
         cameraWorker.start();
 
         try {
-            detector = new Yolo26nObjectDetector();
-            DetectionTracker tracker = new DetectionTracker();
-            inferenceWorker = new InferenceWorker(detector, detectionSlot,
-                    snapshot -> latestDetection.set(tracker.update(snapshot.captureTimeNanos(), snapshot)),
+            poseEstimator = new Yolo26nPoseEstimator();
+            poseWorker = new PoseInferenceWorker(poseEstimator, detectionSlot,
+                    latestPose::set,
                     message -> Platform.runLater(() -> previewView.showError(message)));
-            inferenceWorker.start();
+            poseWorker.start();
         } catch (Exception e) {
-            // Milestone 3 scope is wiring detection into the live view; a missing/bad model
-            // degrades to a plain camera feed with no boxes rather than crashing the app
-            // (ARCHITECTURE.md §10: "model missing" is a user-visible failure, not a silent one).
-            Platform.runLater(() -> previewView.showError("Object detection unavailable: " + e.getMessage()));
+            // Same degrade-to-plain-camera-feed convention as Milestone 3 (ARCHITECTURE.md §10):
+            // a missing/bad pose model is a user-visible failure, not a silent one.
+            Platform.runLater(() -> previewView.showError("Pose estimation unavailable: " + e.getMessage()));
         }
 
-        pongEngine = new PongEngine(System.nanoTime());
+        poseMatchEngine = new PoseMatchEngine(new Random(), System.nanoTime());
 
         renderLoop = new AnimationTimer() {
             @Override
@@ -68,10 +66,10 @@ public class VisionArcadeApp extends Application {
                     return;
                 }
                 try {
-                    DetectionSnapshot detection = latestDetection.get();
+                    PoseSnapshot pose = latestPose.get();
                     previewView.showFrame(snapshot.mat());
-                    previewView.showDetections(detection);
-                    previewView.showPong(pongEngine.tick(now, detection, snapshot.mat().rows()));
+                    previewView.showPose(pose);
+                    previewView.showPoseMatch(poseMatchEngine.tick(now, pose));
                 } finally {
                     snapshot.close();
                 }
@@ -89,11 +87,11 @@ public class VisionArcadeApp extends Application {
         if (renderLoop != null) {
             renderLoop.stop();
         }
-        if (inferenceWorker != null) {
-            inferenceWorker.stop();
+        if (poseWorker != null) {
+            poseWorker.stop();
         }
-        if (detector != null) {
-            detector.close();
+        if (poseEstimator != null) {
+            poseEstimator.close();
         }
         if (cameraWorker != null) {
             cameraWorker.stop();
