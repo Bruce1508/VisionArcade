@@ -40,10 +40,22 @@ PyTorch workspace that fine-tunes YOLO26n on only the 11 classes the games use, 
 `models/yolo26n-finetune11.onnx`; `Yolo26nObjectDetector` now takes its class list as a constructor
 parameter (backward compatible) so both models load through the same `ObjectDetector` boundary.
 The live app still runs the stock 80-class model — benchmarking found no meaningful speed
-difference between the two, so swapping was not done pending the user's call.
+difference between the two, so swapping was not done pending the user's call. Milestone 9 (pose
+estimation: Pose Match game) is done: a pretrained YOLO26n-pose COCO 17-keypoint model (no
+training) is exported to `models/yolo26n-pose.onnx` and loaded through a new `vision.PoseEstimator`
+boundary (`Yolo26nPoseEstimator`/`PoseDecoder`), run on its own thread by `vision.PoseInferenceWorker`
+(mirrors `InferenceWorker`'s shape). `game.PoseMatchEngine` is a pure state machine
+(`tick(nowNanos, PoseSnapshot)`) that picks a target pose from a 3-pose pool (`game.TargetPose`:
+Arms Up, T-Pose, One Leg Up), scores the live skeleton against it with torso-length-scaled
+geometric heuristics (not silhouette matching), and requires a continuous match ≥0.8 for ≥600ms to
+count as "matched" — same round/stability/result/restart shape as `GameEngine`/`PongEngine`.
+`VisionArcadeApp` now runs Pose Match; `CameraPreviewView.showPose()` draws the skeleton overlay
+and `showPoseMatch()` draws the target/match%/score/timer HUD. `GameEngine`/`PongEngine`/the
+object-detector path are untouched and still tested — one game at a time, no mode selector, same
+convention as every milestone before it. User confirmed live behavior looks correct.
 
-Current milestone: **Milestone 9 — Pose estimation: Pose Match game** (see
-`VisionArcade_docs/TASKS.md` for the live checklist — don't duplicate it here, it changes often).
+No milestone is currently in progress (see `VisionArcade_docs/TASKS.md` and `ROADMAP.md` for
+possible next directions — none chosen yet).
 
 ## Documentation map
 

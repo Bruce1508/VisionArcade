@@ -1,10 +1,12 @@
 # Current Tasks
 
-Current milestone: **Milestone 9 — Pose estimation: Pose Match game**
-
-Milestones 0-8 (toolchain/JavaFX/OpenCV/camera validation, live webcam preview, ONNX detection
+Milestones 0-9 (toolchain/JavaFX/OpenCV/camera validation, live webcam preview, ONNX detection
 spike, real-time visualization, Object Hunt MVP, tracking/smoothing, Vision Pong, quality/
-portfolio polish, custom fine-tune) are complete — history preserved in git log.
+portfolio polish, custom fine-tune, pose estimation/Pose Match) are complete — history preserved
+in git log.
+
+No milestone is currently in progress. See ROADMAP.md for possible next directions (none chosen
+yet) before starting new work.
 
 This file should describe the work that is actually next, not the entire product backlog.
 
@@ -27,8 +29,8 @@ This file should describe the work that is actually next, not the entire product
 - [x] Wired `VisionArcadeApp` to run `PoseInferenceWorker`/`Yolo26nPoseEstimator` and tick
   `PoseMatchEngine` instead of the Pong wiring — `GameEngine`/`PongEngine`/`InferenceWorker`/
   `Yolo26nObjectDetector` untouched and still tested, same convention as the M4→M6 swap.
-- [ ] Manually verify Pose Match end-to-end on the primary dev machine (target pose shown,
-  matching registers, round timer/result/restart work) — needs the user's webcam, not run yet.
+- [x] Manually verified Pose Match end-to-end on the primary dev machine — user confirmed it
+  looks correct (skeleton overlay, match %, round/result/restart cycle).
 
 ## Do not implement yet
 
@@ -44,12 +46,11 @@ This file should describe the work that is actually next, not the entire product
 
 Before editing:
 1. inspect the existing project;
-2. preserve the Milestone 0–8 toolchain/JavaFX/OpenCV/camera/vision/game wiring;
+2. preserve the Milestone 0–9 toolchain/JavaFX/OpenCV/camera/vision/game wiring;
 3. avoid replacing working configuration unnecessarily.
 
 After editing:
 1. run the build/tests;
-2. manually verify the live preview, detection overlay, **and that Pose Match rounds can be
-   played end-to-end (target pose shown, matching registers, round timer/result/restart work)**
-   on the primary development machine;
+2. manually verify the live preview and whatever game is currently wired into
+   `VisionArcadeApp` plays end-to-end on the primary development machine;
 3. do not start a new milestone automatically.
