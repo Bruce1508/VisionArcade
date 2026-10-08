@@ -8,7 +8,7 @@ Instead of being a bounding-box demo, the application uses detected objects or b
 
 `real world -> webcam -> computer vision -> detections -> game logic -> JavaFX`
 
-## Two playable modes
+## Three playable modes
 
 **Object Hunt** — the game asks for an object (a bottle, a cup, ...), the player shows it to the
 webcam, the detector confirms it with a confidence threshold and short stability window, and the
@@ -18,7 +18,12 @@ game awards points and starts the next round.
 standing/crouching; a ball bounces around the field off the walls and the paddle, with score and
 automatic restart on a miss.
 
-Only one game runs at a time; there is no in-app mode selector yet.
+**Pose Match** — a pretrained pose model tracks the player's 17-keypoint skeleton; the game shows
+a target pose (Arms Up, T-Pose, One Leg Up) and the player must hold a matching real-world pose
+for a short stability window to score a point before the round timer runs out.
+
+Only one game runs at a time; there is no in-app mode selector yet — `VisionArcadeApp` currently
+runs Pose Match (Milestone 9).
 
 ## Progress
 
@@ -29,7 +34,9 @@ Only one game runs at a time; there is no in-app mode selector yet.
 5. Object Hunt MVP — done
 6. Tracking/smoothing — done
 7. Second game (Vision Pong) — done
-8. Testing, benchmarking, packaging, polish — in progress (Milestone 7)
+8. Testing, benchmarking, packaging, polish — done (Milestone 7)
+9. Custom fine-tune on the app's actual class set — done, reference artifact only (Milestone 8)
+10. Pose estimation + third game (Pose Match) — code complete, pending manual live verification (Milestone 9)
 
 ## Baseline stack
 
@@ -53,9 +60,7 @@ See `ARCHITECTURE.md` for the design and `TASKS.md` for the current work.
 - accounts/authentication
 - Spring Boot
 - database persistence
-- custom model training
 - TensorFlow in the Java runtime
-- pose estimation
 - production-grade packaging
 
 ## Commands

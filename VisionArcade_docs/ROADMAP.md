@@ -181,3 +181,43 @@ Definition of done:
 
 Do not swap the live app over to the fine-tuned model without the user confirming it after seeing
 the before/after numbers.
+
+---
+
+## Milestone 9 — Pose estimation: Pose Match game
+
+**Goal:** integrate a pretrained human-pose model (COCO 17-keypoint) behind a narrow
+`PoseEstimator` boundary (mirroring `ObjectDetector`), and build a third game — Pose Match — where
+the player matches a target pose shown on screen using real body position. No custom training:
+standard pose models ship pretrained on COCO keypoints, so this is spike-sized work like
+Milestone 2, not pipeline-sized work like Milestone 8.
+
+Tasks:
+- export a pretrained COCO-keypoint pose model to ONNX via the existing `ml/` Python workspace (no
+  training)
+- inspect its input/output metadata (one-time spike, same shape as Milestone 2's detector spike)
+- `vision.PoseEstimator` interface + implementation: preprocessing, inference, decode one person
+  box + 17 keypoints + confidences; take only the highest-confidence person in multi-person frames,
+  consistent with Vision Pong's single-controller convention
+- `vision.Pose`/`Keypoint` immutable value objects
+- `game.PoseMatchEngine`: pure state machine (`tick(nowNanos, Pose)`, no camera/JavaFX dependency)
+  — pick a target pose from a small fixed pool (e.g. "Arms Up", "T-Pose", "One Leg Up"), score the
+  live pose against the target with simple geometric heuristics (relative joint positions, not
+  exact silhouette distance), require a continuous match for ~600ms (same threshold Object Hunt
+  uses), round timer, result display, restart — same shape as `GameEngine`/`PongEngine`
+- `CameraPreviewView.showPoseMatch()`: skeleton overlay (joint lines) + target pose name + match %
+  + result message, same Canvas overlay pattern as the existing games
+- `VisionArcadeApp` ticks `PoseMatchEngine` instead of `PongEngine` — same "one game at a time, no
+  mode selector" convention as the Milestone 4 → Milestone 6 swap
+
+Definition of done:
+- pretrained pose ONNX model loads and decodes to sensible keypoints on a webcam frame
+- several Pose Match rounds can be played end-to-end, feeling responsive on the primary dev machine
+- `PoseMatchEngine` state-machine rules unit tested without a camera, mirroring
+  `GameEngineTest`/`PongEngineTest`
+- `GameEngine`/`PongEngine` untouched and still tested
+
+Do not:
+- train or fine-tune a pose model — use its COCO-pretrained weights as-is
+- handle more than one tracked person — take the most confident detection only
+- build a mode selector

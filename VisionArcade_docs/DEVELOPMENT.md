@@ -12,7 +12,8 @@ Recommended for this new project:
 - **JUnit:** 6.0.3 or newer stable 6.0.x when the project is initialized
 - **OpenCV:** 4.14.x
 - **ONNX Runtime Java:** 1.30.0 (pinned in Milestone 2; latest stable per Maven Central metadata, verified on macOS arm64)
-- **Model:** YOLO26n exported to ONNX (pinned in Milestone 2; see "Pinned model" below)
+- **Model:** YOLO26n exported to ONNX (pinned in Milestone 2; see "Pinned model" below) and
+  YOLO26n-pose exported to ONNX (pretrained, Milestone 9; see "Pretrained pose model" below)
 - **Primary dev machine:** macOS Apple Silicon / aarch64
 
 Use stable releases, not EA/RC/nightly builds.
@@ -138,6 +139,26 @@ stock model; this is a comparison artifact pending the user's review of the numb
 - **Export command:** `yolo export model=best.pt format=onnx imgsz=640 opset=18` (via
   `ml/export/export_onnx.py`)
 - **SHA-256:** `1d360d93175257f0959fd1c21de9b81ae6f98a1c6ce17a49ffe37f2cd3444955`
+
+### Pretrained pose model (Milestone 9)
+
+No training — the stock COCO-keypoint pose model, used as-is for the Pose Match game.
+
+- **Family/version:** YOLO26n-pose (Ultralytics 8.4.173)
+- **Source:** auto-downloaded by the `ultralytics` PyPI package (`yolo26n-pose.pt`, from
+  Ultralytics' own release assets), then exported locally via `ml/export/export_pose_onnx.py`
+- **License:** AGPL-3.0 (Ultralytics) — same terms as the other pinned models above
+- **Input:** `images`, float32, `[1, 3, 640, 640]`, values in `0..1` (unchanged from the detector
+  models)
+- **Output:** `output0`, float32, `[1, 56, 8400]` — rows 0-3 are box `cx,cy,w,h`, row 4 is the
+  single "person" class confidence, rows 5-55 are 17 keypoints x 3 (`x, y, confidence`) in COCO
+  order (nose, eyes, ears, shoulders, elbows, wrists, hips, knees, ankles)
+- **Class list:** single class, `person` (COCO keypoints format)
+- **Export command:** `yolo export model=yolo26n-pose.pt format=onnx imgsz=640 opset=18` (via
+  `ml/export/export_pose_onnx.py`; `yolo26n-pose.pt` auto-downloads on first run)
+- **SHA-256:** `ae9ef51bf593003fa915315c54ac25d0a9c2178448b1e3b304d67f85ad2d3fa5`
+- **Local path:** `models/yolo26n-pose.onnx` (gitignored; re-run the export command above to
+  regenerate it)
 - **Local path:** `models/yolo26n-finetune11.onnx` (gitignored; re-run the `ml/` pipeline in
   `ml/README.md` to regenerate it — note the dataset download/training is nondeterministic in
   wall-clock time and image sampling is seeded but depends on COCO's current hosted annotations)

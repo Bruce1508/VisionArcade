@@ -42,7 +42,7 @@ parameter (backward compatible) so both models load through the same `ObjectDete
 The live app still runs the stock 80-class model — benchmarking found no meaningful speed
 difference between the two, so swapping was not done pending the user's call.
 
-Current milestone: **Milestone 8 — Custom fine-tune: app's actual class set** (see
+Current milestone: **Milestone 9 — Pose estimation: Pose Match game** (see
 `VisionArcade_docs/TASKS.md` for the live checklist — don't duplicate it here, it changes often).
 
 ## Documentation map
